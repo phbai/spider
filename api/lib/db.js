@@ -28,12 +28,20 @@ var Post = mongoose.model('Post', postSchema);
 // var page = 0;
 var perpage = 24;
 
-module.exports = function(keyword, page = 1) {
-  var reg = new RegExp(`.*${keyword}.*`, "i");
-
+function queryResult(queryOption, page, limit) {
   return new Promise((resolve, reject) => {
-    Post.paginate({ $or: [{"name": reg}, {"desc": reg}, {"author": reg}] }, { page, limit: perpage }, function(err, result) {
+    Post.paginate(queryOption, { page, limit }, function(err, result) {
       resolve(result);
     });
   });
+}
+
+module.exports = function(keyword, page = 1) {
+  if (keyword && keyword.length > 1) {
+    var reg = new RegExp(`.*${keyword}.*`, "i");
+    const queryOption = { $or: [{"name": reg}, {"desc": reg}, {"author": reg}] };
+    return queryResult(queryOption, page, perpage)
+  }
+
+  return queryResult({}, page, perpage);
 }
