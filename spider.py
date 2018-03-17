@@ -142,7 +142,7 @@ if __name__ == '__main__':
     max_page = get_max_page(soup)
     print('共{0}页'.format(max_page))
     # insert_test()
-    for page in range(6):
+    for page in range(max_page):
         insert_posts_with_page(page + 1)
         print('插入第{0}页数据完毕'.format(page + 1))
     # get_info(1)
