@@ -8,7 +8,6 @@ db = client['91porn']
 posts = db['posts']
 flag = 1
 max_page = 1
-skip_count = 0
 insert_count = 0
 headers = {'Accept-Language':'zh-CN,zh;q=0.9','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36'}
 
@@ -19,7 +18,6 @@ def get_soup(page):
     return soup
 
 def insert_posts_with_page(page):
-    global skip_count
     soup = get_soup(page)
     items = soup.find_all(class_='listchannel')
 
@@ -32,8 +30,7 @@ def insert_posts_with_page(page):
         link_result = posts.find_one({"link": link})
         # 数据库中已经存在 直接跳过
         if (link_result):
-            skip_count = skip_count + 1
-            continue
+            return 'finished'
         img_url = title_info.find('img', width=True)['src']
         title = title_info.find('img', width=True)['title']
         author = author_info.string
@@ -62,6 +59,7 @@ def insert_posts_with_page(page):
             'points': points,
         }
         insert_post(post)
+        insert_count = insert_count + 1
         # print('标题：{0} 链接：{1} 作者：{2}'.format(title, link, author))
         # print('时长：{0} 时间：{1} 查看：{2} 收藏：{3} 评论：{4} 积分：{5}'.format(duration, time, views, favorites, comments, points))
     # print(time, views, comments, points)
@@ -76,15 +74,16 @@ def get_max_page(soup):
 def insert_post(post):
     global insert_count
     posts.insert_one(post)
-    insert_count = insert_count + 1
 
 if __name__ == '__main__':
     soup = get_soup(1)
     max_page = get_max_page(soup)
     print('共{0}页'.format(max_page))
     for page in range(max_page):
-        insert_posts_with_page(page + 1)
-        print('插入第{0}页数据完毕'.format(page + 1))
-    print("共插入{0}条数据，{1}条跳过".format(insert_count, skip_count))
+        print('正在处理第{0}页数据...'.format(page + 1))
+        status = insert_posts_with_page(page + 1)
+        if (status == 'finished'):
+            break
+    print("共插入{0}条数据".format(insert_count))
     # get_info(1)
     # insert_test()
