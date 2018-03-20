@@ -18,6 +18,7 @@ def get_soup(page):
     return soup
 
 def insert_posts_with_page(page):
+    global insert_count
     soup = get_soup(page)
     items = soup.find_all(class_='listchannel')
 
@@ -72,7 +73,6 @@ def get_max_page(soup):
     return int(page)
 
 def insert_post(post):
-    global insert_count
     posts.insert_one(post)
 
 if __name__ == '__main__':
