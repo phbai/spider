@@ -31,6 +31,8 @@ var perpage = 24;
 function queryResult(queryOption, page, limit) {
   return new Promise((resolve, reject) => {
     Post.paginate(queryOption, { page, limit }, function(err, result) {
+      console.log('queryOption: ', queryOption, 'page: ', page, 'limit: ', limit);
+      console.log('result: ', result);
       resolve(result);
     });
   });
