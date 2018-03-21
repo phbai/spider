@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import os,re,time,random
 from pymongo import MongoClient
+import time
 
 client = MongoClient('mongo', 27017)
 db = client['91porn']
@@ -75,15 +76,20 @@ def get_max_page(soup):
 def insert_post(post):
     posts.insert_one(post)
 
-if __name__ == '__main__':
+def task():
     soup = get_soup(1)
     max_page = get_max_page(soup)
     print('共{0}页'.format(max_page))
-    for page in range(max_page):
+    for page in range(5):
         print('正在处理第{0}页数据...'.format(page + 1))
         status = insert_posts_with_page(page + 1)
         if (status == 'finished'):
             break
     print("共插入{0}条数据".format(insert_count))
+
+if __name__ == '__main__':
+    while True:
+        task()
+        time.sleep(60)
     # get_info(1)
     # insert_test()
