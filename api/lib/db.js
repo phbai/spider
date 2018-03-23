@@ -24,26 +24,20 @@ var postSchema = mongoose.Schema({
 postSchema.plugin(mongoosePaginate);
 
 var Post = mongoose.model('Post', postSchema);
-// var keyword = "HGeli";
-// var page = 0;
-var perpage = 24;
 
 function queryResult(queryOption, page, limit) {
   return new Promise((resolve, reject) => {
-    Post.paginate(queryOption, { page, limit }, function(err, result) {
-      console.log('queryOption: ', queryOption, 'page: ', page, 'limit: ', limit);
-      console.log('result: ', result);
+    Post.paginate(queryOption, { page, limit, sort: { _id: -1 } }, function(err, result) {
       resolve(result);
     });
   });
 }
 
-module.exports = function(keyword, page = 1) {
+module.exports = function(keyword, page = 1, size = 24) {
   if (keyword && keyword.length > 1) {
     var reg = new RegExp(`.*${keyword}.*`, "i");
-    const queryOption = { $or: [{"name": reg}, {"desc": reg}, {"author": reg}] };
-    return queryResult(queryOption, page, perpage)
+    const queryOption = { $or: [{"title": reg}, {"description": reg}, {"author": reg}] };
+    return queryResult(queryOption, page, size);
   }
-
-  return queryResult({}, page, perpage);
+  return queryResult({}, page, size);
 }

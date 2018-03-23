@@ -12,7 +12,8 @@ router.get('/', function(req, res, next) {
 router.get('/search', function(req, res, next) {
   const keyword = req.query.s;
   const page = req.query.p;
-  db(keyword, page)
+  const size = req.query.size;
+  db(keyword, page, size)
     .then((data) => {
       const result = {"result": data};
       res.json(result);

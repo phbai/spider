@@ -4,6 +4,13 @@ import os,re,time,random
 from pymongo import MongoClient
 import time
 
+def random_ip():
+    a=random.randint(1,255)
+    b=random.randint(1,255)
+    c=random.randint(1,255)
+    d=random.randint(1,255)
+    return(str(a)+'.'+str(b)+'.'+str(c)+'.'+str(d))
+
 client = MongoClient('mongo', 27017)
 db = client['91porn']
 posts = db['posts']
@@ -12,27 +19,41 @@ max_page = 1
 insert_count = 0
 headers = {'Accept-Language':'zh-CN,zh;q=0.9','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36'}
 
-def get_soup(page):
-    page_url='http://91porn.com/v.php?next=watch&page='+str(page)
-    r = requests.get(url=page_url, headers=headers)
+def get_page_content(page):
+    page_url = 'http://91porn.com/v.php?next=watch&page='+str(page)
+    return get_soup(page_url, headers)
+
+def get_soup(url, headers):
+    r = requests.get(url=url, headers=headers)
     soup = BeautifulSoup(r.content, 'html.parser')
     return soup
 
 def insert_posts_with_page(page):
     global insert_count
-    soup = get_soup(page)
+    page_url='http://91porn.com/v.php?next=watch&page=' + str(page)
+    soup = get_page_content(page)
     items = soup.find_all(class_='listchannel')
 
-    for item in items:
+    # 从最后一个item开始解析
+    for item in reversed(items):
         title_info = item.find_all('div')[0]
         author_info = item.find(target='_parent')
         
         # 链接地址、图片地址
         link = title_info.find('a')['href']
+
+        sub_page_headers = {'Accept-Language':'zh-CN,zh;q=0.9','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36','X-Forwarded-For':random_ip(),'referer':page_url,'Content-Type': 'multipart/form-data; session_language=cn_CN'}
+        # 子页面抓取描述和时间
+        sub_page_soup = get_soup(link, sub_page_headers)
+        description = sub_page_soup.find_all(class_='more')[0].get_text(strip=True)
+        time = sub_page_soup.find_all('span', class_='title')[1].string
+
+        # 检测是否已经存入数据库
         link_result = posts.find_one({"link": link})
         # 数据库中已经存在 直接跳过
         if (link_result):
-            return 'finished'
+            continue
+
         img_url = title_info.find('img', width=True)['src']
         title = title_info.find('img', width=True)['title']
         author = author_info.string
@@ -40,7 +61,6 @@ def insert_posts_with_page(page):
         # 
         all_texts = re.findall(r'</span>(.+?)[<|\n]', str(item))
         duration = re.sub(r'\s', '' , all_texts[0])
-        time = re.sub(r'\s', '' , all_texts[1])
         views = re.sub(r'\s', '' , all_texts[2])
         favorites = re.sub(r'\s', '' , all_texts[3])
         comments = re.sub(r'\s', '' , all_texts[4])
@@ -59,6 +79,7 @@ def insert_posts_with_page(page):
             'favorites': favorites, 
             'comments': comments, 
             'points': points,
+            'description': description,
         }
         insert_post(post)
         insert_count = insert_count + 1
@@ -76,20 +97,22 @@ def get_max_page(soup):
 def insert_post(post):
     posts.insert_one(post)
 
-def task():
-    soup = get_soup(1)
+def initial_crawler_task():
+    soup = get_page_content(1)
     max_page = get_max_page(soup)
     print('共{0}页'.format(max_page))
-    for page in range(5):
+    for page in reversed(range(5)):
         print('正在处理第{0}页数据...'.format(page + 1))
-        status = insert_posts_with_page(page + 1)
-        if (status == 'finished'):
-            break
+        insert_posts_with_page(page + 1)
     print("共插入{0}条数据".format(insert_count))
 
-if __name__ == '__main__':
+def update_task():
     while True:
-        task()
+        status = insert_posts_with_page(1)
         time.sleep(60)
+
+if __name__ == '__main__':
+    initial_crawler_task()
+    update_task()
     # get_info(1)
     # insert_test()
