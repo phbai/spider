@@ -108,7 +108,7 @@ def initial_crawler_task():
 
 def update_task():
     while True:
-        status = insert_posts_with_page(1)
+        insert_posts_with_page(1)
         time.sleep(60)
 
 if __name__ == '__main__':
