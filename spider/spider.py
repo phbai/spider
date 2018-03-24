@@ -101,7 +101,7 @@ def initial_crawler_task():
     soup = get_page_content(1)
     max_page = get_max_page(soup)
     print('共{0}页'.format(max_page))
-    for page in reversed(range(5)):
+    for page in reversed(range(max_page)):
         print('正在处理第{0}页数据...'.format(page + 1))
         insert_posts_with_page(page + 1)
     print("共插入{0}条数据".format(insert_count))
