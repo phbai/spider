@@ -20,6 +20,7 @@ router.get('/search', function(req, res, next) {
     })
     .catch((error) => {
       const result = {"result": null, "status": "failed"}
+      res.json(result);
     });
 });
 
@@ -31,7 +32,8 @@ router.get('/parse', function(req, res, next) {
       res.json(result);
     })
     .catch((error) => {
-      const result = {"result": null, "status": "failed"}
+      const result = {"result": null, "status": "failed"};
+      res.json(result);
     });
 });
 module.exports = router;
