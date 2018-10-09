@@ -15,8 +15,11 @@ router.get('/search', function(req, res, next) {
   const size = req.query.size;
   db(keyword, page, size)
     .then((data) => {
-      const result = {"result": data};
+      const result = {"result": data, "status": "ok"};
       res.json(result);
+    })
+    .catch((error) => {
+      const result = {"result": null, "status": "failed"}
     });
 });
 
@@ -24,8 +27,11 @@ router.get('/parse', function(req, res, next) {
   const url = req.query.url;
   parse(url)
     .then((data) => {
-      const result = {"result": data};
+      const result = {"result": data, "status": "ok"};
       res.json(result);
     })
+    .catch((error) => {
+      const result = {"result": null, "status": "failed"}
+    });
 });
 module.exports = router;
